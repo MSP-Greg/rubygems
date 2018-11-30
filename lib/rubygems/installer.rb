@@ -706,26 +706,44 @@ class Gem::Installer
   end
 
   def check_that_user_bin_dir_is_in_path # :nodoc:
+    return if self.class.path_warning
+
     user_bin_dir = @bin_dir || Gem.bindir(gem_home)
-    user_bin_dir = user_bin_dir.gsub(File::SEPARATOR, File::ALT_SEPARATOR) if
-      File::ALT_SEPARATOR
 
     path = ENV['PATH']
-    if Gem.win_platform?
+
+    # Windows file system is case insensitive, but other OS's may also be,
+    # so we need to check
+    # test_dir folder needs to exist, try a few...
+    test_dir = if    Dir.exist? user_bin_dir  then user_bin_dir
+               elsif Dir.exist? Gem.user_home then Gem.user_home
+               else  __dir__
+               end
+
+    # fs_case_insens is true for case insensitive file systems
+    fs_case_insens =
+      test_dir != test_dir.swapcase && File.identical?(test_dir, test_dir.swapcase)
+
+    # Newer Windows paths can use either ALT_SEPARATOR (\) or SEPARATOR (/)
+    if File::ALT_SEPARATOR
+      include_dir = user_bin_dir.tr(File::ALT_SEPARATOR, File::SEPARATOR)
+      path = path.tr(File::ALT_SEPARATOR, File::SEPARATOR)
+    else
+      include_dir = user_bin_dir
+    end
+
+    if fs_case_insens
+      include_dir = include_dir.downcase
       path = path.downcase
-      user_bin_dir = user_bin_dir.downcase
     end
 
     path = path.split(File::PATH_SEPARATOR)
 
-    unless path.include? user_bin_dir
-      unless !Gem.win_platform? && (path.include? user_bin_dir.sub(ENV['HOME'], '~'))
-        unless self.class.path_warning
-          alert_warning "You don't have #{user_bin_dir} in your PATH,\n\t  gem executables will not run."
-          self.class.path_warning = true
-        end
-      end
-    end
+    return path.include?(include_dir) ||
+      !Gem.win_platform? && path.include?(user_bin_dir.sub(ENV['HOME'], '~'))
+
+    alert_warning "You don't have #{user_bin_dir} in your PATH,\n\t  gem executables will not run."
+    self.class.path_warning = true
   end
 
   def verify_gem_home # :nodoc:

@@ -196,12 +196,29 @@ gem 'other', version
 
     bin_dir = installer.bin_dir
 
-    if Gem.win_platform?
-      bin_dir = bin_dir.downcase.gsub(File::SEPARATOR, File::ALT_SEPARATOR)
-    end
-
     orig_PATH, ENV['PATH'] =
       ENV['PATH'], [ENV['PATH'], bin_dir].join(File::PATH_SEPARATOR)
+
+    use_ui @ui do
+      installer.check_that_user_bin_dir_is_in_path
+    end
+
+    assert_empty @ui.error
+  ensure
+    ENV['PATH'] = orig_PATH
+  end
+
+  def test_check_that_user_bin_dir_is_in_path_case_insens
+    skip "Requires case insensitive file system" unless windows?
+
+    installer = setup_base_installer
+
+    bin_dir = installer.bin_dir
+
+    bin_dir_case = bin_dir.swapcase
+
+    orig_PATH, ENV['PATH'] =
+      ENV['PATH'], [ENV['PATH'], bin_dir_case].join(File::PATH_SEPARATOR)
 
     use_ui @ui do
       installer.check_that_user_bin_dir_is_in_path
@@ -238,10 +255,6 @@ gem 'other', version
     end
 
     expected = installer.bin_dir
-
-    if Gem.win_platform?
-      expected = expected.downcase.gsub(File::SEPARATOR, File::ALT_SEPARATOR)
-    end
 
     assert_match expected, @ui.error
   end
