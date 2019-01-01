@@ -57,6 +57,15 @@ when %w(before_script)
   else
     with_retries { run('rake', %w(spec:travis:deps)) }
   end
+
+  if /trunk/ =~ RUBY_DESCRIPTION
+    require 'fileutils'
+    Dir.chdir(RbConfig::CONFIG['sitelibdir']) { |d|
+      FileUtils.rm_r 'bundler'
+      FileUtils.rm_r 'rubygems'
+      FileUtils.rm %w( bundler.rb rubygems.rb ubygems.rb )
+    }
+  end
 when %w(rubocop)
   run('gem', %w(install rubocop -v ~>0.61.1))
   run('util/rubocop')
