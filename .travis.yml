@@ -29,6 +29,7 @@ stages:
 before_script:
   - util/ci before_script
 script:
+  - export RUBYOPT="-I/home/travis/build/rubygems/rubygems/bundler/lib -I/home/travis/build/rubygems/rubygems/lib"
   - util/ci script
 matrix:
   allow_failures:
