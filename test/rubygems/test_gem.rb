@@ -198,13 +198,20 @@ class TestGem < Gem::TestCase
       'gems/foo-1/bin/foo.cmd' => prog_mode,
       'gems/foo-1/data/foo.txt' => data_mode,
     }
-    # below is for intermittent errors on Appveyor & Travis 2019-01,
-    # see https://github.com/rubygems/rubygems/pull/2568
-    sleep 0.1
+    # below rescue block is for intermittent errors on Appveyor & Travis 2019-01
+    # see https://github.com/rubygems/rubygems/pull/2568 & 2599
     result = {}
     Dir.chdir @gemhome do
       expected.each_key do |n|
-        result[n] = (File.stat(n).mode & mask).to_s(8)
+        cntr = 0
+        begin
+          stat = File.stat n
+          result[n] = (stat.mode & mask).to_s(8)
+        rescue
+          sleep 0.1
+          cntr += 1
+          retry if cntr < 4
+        end
       end
     end
     assert_equal(expected, result)
