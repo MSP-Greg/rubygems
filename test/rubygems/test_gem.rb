@@ -202,16 +202,13 @@ class TestGem < Gem::TestCase
     # see https://github.com/rubygems/rubygems/pull/2568 & 2599 ?
     result = {}
     Dir.chdir @gemhome do
-      cntr = 0
       expected.each_key do |n|
-        begin
-          result[n] = (File.stat(n).mode & mask).to_s(8)
-          cntr = 0
-        rescue Errno::ENOENT
+        cntr = 0
+        until File.exist? n or cntr > 3 do
           sleep 0.1
           cntr += 1
-          redo if cntr < 3
         end
+        result[n] = (File.stat(n).mode & mask).to_s(8)
       end
     end
     assert_equal(expected, result)
