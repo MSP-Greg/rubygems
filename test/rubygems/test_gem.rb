@@ -1902,6 +1902,8 @@ You may need to `gem install -g` to install missing gems
     else
       RbConfig::CONFIG.delete 'ruby_install_name'
     end
+    # Gem.ruby uses RbConfig::CONFIG['ruby_install_name']
+    Gem.instance_variable_set :@ruby, nil
   end
 
   def with_plugin(path)
