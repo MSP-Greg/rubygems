@@ -8,6 +8,7 @@ jobs:
     name: RG Cron ${{ matrix.os }} ${{ matrix.ruby }}
     runs-on: ${{ matrix.os }}-latest
     strategy:
+      fail-fast: false
       matrix:
         include:
           - { os: ubuntu  , ruby: head  }
@@ -22,8 +23,16 @@ jobs:
         with:
           ruby-version: ${{ matrix.ruby }}
           bundler: none
+
       - name: Setup
-        run:  rake setup
+        shell: pwsh
+        run:   |
+          # update RubyGems in Ruby 2.2, bundle install
+          if ('${{ matrix.ruby }}' -eq 'mswin') {
+            gem install builder -N
+          } else {
+            rake setup
+          }
+        
       - name: Test rubygems
-        run:  |
-          rake test
+        run:  rake test
