@@ -1,15 +1,20 @@
 name: daily
 
-on:
-  schedule:
-    - cron: '0 0 * * *'
+on: [push, pull_request]
 
 jobs:
   daily:
-    runs-on: ubuntu-16.04
+    timeout-minutes: 10
+    name: RG Cron ${{ matrix.os }} ${{ matrix.ruby }}
+    runs-on: ${{ matrix.os }}-latest
     strategy:
       matrix:
-        ruby: [ ruby-head ]
+        include:
+          - { os: ubuntu  , ruby: head  }
+          - { os: macos   , ruby: head  }
+          - { os: windows , ruby: mingw }
+          - { os: windows , ruby: mswin }
+          
     steps:
       - uses: actions/checkout@v2
       - name: Set up Ruby
@@ -18,7 +23,6 @@ jobs:
           ruby-version: ${{ matrix.ruby }}
           bundler: none
       - name: Test rubygems
-        run: |
-          rake setup
+        run:  |
+          gem install builder -N
           rake test
-    timeout-minutes: 60
