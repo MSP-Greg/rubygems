@@ -22,7 +22,8 @@ jobs:
         with:
           ruby-version: ${{ matrix.ruby }}
           bundler: none
+      - name: Setup
+        run:  rake setup
       - name: Test rubygems
         run:  |
-          gem install builder -N
           rake test
