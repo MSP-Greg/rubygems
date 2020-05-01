@@ -739,7 +739,7 @@ class Gem::Installer
 
     path = path.split(File::PATH_SEPARATOR)
 
-    return path.include?(include_dir) ||
+    return if path.include?(include_dir) ||
       !Gem.win_platform? && path.include?(user_bin_dir.sub(ENV['HOME'], '~'))
 
     alert_warning "You don't have #{user_bin_dir} in your PATH,\n\t  gem executables will not run."
