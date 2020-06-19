@@ -23,6 +23,29 @@ module Bundler
     def run
       validate_cmd!
       SharedHelpers.set_bundle_environment
+
+      # may be a binstub that should be loaded, not exec'd
+      # or, it's a command without a path and an extension
+      if Bundler::WINDOWS && File.basename(cmd, ".*") == cmd
+        path = "#{Bundler.bundle_path}/bin"
+        cmd_path = File.join(path, cmd)
+        if File.exist?(cmd_path)
+          # assume it's a Ruby file
+          if Bundler.settings[:disable_exec_load]
+            kernel_exec(cmd_path, *args)
+          end
+          return kernel_load(cmd_path, *args)
+        elsif system("where.exe #{cmd} >NUL 2>NUL")
+          # it is an executable file, where.exe is the Windows which
+          kernel_exec(cmd, *args)
+        else
+          # internal shell command
+          args.unshift(cmd)
+          hsh = Hash === args.last ? args.pop : {}
+          kernel_exec(args.join(" "), hsh)
+        end
+      end
+
       if bin_path = Bundler.which(cmd)
         if !Bundler.settings[:disable_exec_load] && ruby_shebang?(bin_path)
           return kernel_load(bin_path, *args)
@@ -80,6 +103,11 @@ module Bundler
         "#!/usr/bin/env truffleruby\n",
         "#!#{Gem.ruby}\n",
       ]
+
+      if Bundler::WINDOWS
+        # below shebang lines may have been used by RubyGems
+        possibilities.concat(["#! ruby\n", "#! jruby\n", "#! truffleruby\n"])
+      end
 
       if File.zero?(file)
         Bundler.ui.warn "#{file} is empty"
