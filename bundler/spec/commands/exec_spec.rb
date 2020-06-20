@@ -286,8 +286,6 @@ RSpec.describe "bundle exec" do
   end
 
   it "does not duplicate already exec'ed RUBYOPT" do
-    skip "https://github.com/rubygems/bundler/issues/6898" if Gem.win_platform?
-
     install_gemfile <<-G
       gem "rack"
     G
@@ -296,16 +294,16 @@ RSpec.describe "bundle exec" do
 
     rubyopt = opt_add(bundler_setup_opt, ENV["RUBYOPT"])
 
-    bundle "exec 'echo $RUBYOPT'"
+    ruby_opt = Gem.win_platform? ? "%RUBYOPT%" : "$RUBYOPT"
+
+    bundle "exec 'echo #{ruby_opt}'"
     expect(out.split(" ").count(bundler_setup_opt)).to eq(1)
 
-    bundle "exec 'echo $RUBYOPT'", :env => { "RUBYOPT" => rubyopt }
+    bundle "exec 'echo #{ruby_opt}'", :env => { "RUBYOPT" => rubyopt }
     expect(out.split(" ").count(bundler_setup_opt)).to eq(1)
   end
 
   it "does not duplicate already exec'ed RUBYLIB" do
-    skip "https://github.com/rubygems/bundler/issues/6898" if Gem.win_platform?
-
     install_gemfile <<-G
       gem "rack"
     G
@@ -314,10 +312,11 @@ RSpec.describe "bundle exec" do
     rubylib = rubylib.to_s.split(File::PATH_SEPARATOR).unshift lib_dir.to_s
     rubylib = rubylib.uniq.join(File::PATH_SEPARATOR)
 
-    bundle "exec 'echo $RUBYLIB'"
+    ruby_lib = Gem.win_platform? ? "%RUBYLIB%" : "$RUBYLIB"
+    bundle "exec 'echo #{ruby_lib}'"
     expect(out).to include(rubylib)
 
-    bundle "exec 'echo $RUBYLIB'", :env => { "RUBYLIB" => rubylib }
+    bundle "exec 'echo #{ruby_lib}'", :env => { "RUBYLIB" => rubylib }
     expect(out).to include(rubylib)
   end
 
