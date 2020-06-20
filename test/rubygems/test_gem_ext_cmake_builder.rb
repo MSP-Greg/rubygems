@@ -7,9 +7,6 @@ class TestGemExtCmakeBuilder < Gem::TestCase
   def setup
     super
 
-    # Details: https://github.com/rubygems/rubygems/issues/1270#issuecomment-177368340
-    # skip "CmakeBuilder doesn't work on Windows." if Gem.win_platform?
-
     begin
       _, status = Open3.capture2e('cmake')
       skip 'cmake not present' unless status.success?
