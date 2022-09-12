@@ -93,6 +93,9 @@ jobs:
   install_rubygems_windows:
     name: Install Rubygems on Windows (${{ matrix.ruby.name }})
     runs-on: windows-2022
+    env:
+      JAVA_HOME: ${{ env.JAVA_HOME_17_X64 }}
+
     strategy:
       fail-fast: false
       matrix:
